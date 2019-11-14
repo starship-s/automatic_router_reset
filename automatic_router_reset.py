@@ -15,6 +15,14 @@ class ssh:
     client = None
 
     def __init__(self, address, username, password):
+        """
+        connects to the router via ssh
+
+        :param address: router network address
+        :param username: router admin username (you should usually leave this as root even if you've changed your web
+        interface login username)
+        :param password: router admin password
+        """
         print("Connecting to server.")
         self.client = client.SSHClient()
         self.client.set_missing_host_key_policy(client.AutoAddPolicy())
@@ -41,8 +49,14 @@ class TimeMonitor:
 
     @staticmethod
     def ping_check():
+        """
+        ping Google.com as a somewhat reliable source for checking whether internet connection is still active,
+        though any website could be substituted here
+        :return: the final result of the check sequence
+        """
         loop = 0
         r = ping3.ping('google.com')
+        # loops though checks several times in case the connection loss is only a brief one
         while r is None and loop < 4:
             time.sleep(20)
             r = ping3.ping('google.com')
@@ -51,9 +65,15 @@ class TimeMonitor:
 
     @staticmethod
     def reboot():
+        """
+        opens a ssh session an sends signal to reboot the router.  Also writes current time to a CSV in the directory,
+        for the sake of tracking how many reboots occur
+        """
         connection = ssh(address, username, password)
         connection.send_command("reboot")
+
         print("Executing reboot")
+
         with open((os.path.join(sys.path[0] + 'time_track.csv')), mode='a') as time_track:
             time_writer = csv.writer(time_track, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             time_writer.writerow([time.time()])
